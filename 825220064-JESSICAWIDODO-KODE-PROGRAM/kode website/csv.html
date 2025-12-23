@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>DASHBOARD PT INTIMAS METAL Pratama</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="csv.css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://kit.fontawesome.com/431a8191cd.js" crossorigin="anonymous"></script>
+    <style>
+        table { border-collapse: collapse; width: 100%; margin-top: 10px;}
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left;}
+        th { background-color: #f2f2f2; }
+        .failed-row { color: red; }
+        #uploadMessage { margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="bg-1">
+        <header>
+            <img src="logo.png" alt="Logo" class="logo">
+            <h1 style="color: black;">PT Intimas Metal Pratama</h1>
+        </header>
+    </div>
+
+    <div class="sidebar">
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="data.html">Sumber Data</a></li>
+            <li><a href="csv.html"class="active">Upload CSV</a></li>
+            <li><a href="login.html">Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h2>Upload Data CSV:</h2>
+
+        <label for="jenisData">Pilih Jenis Data:</label>
+        <select id="jenisData">
+            <option value="karyawan">Data Karyawan</option>
+            <option value="absensi">Data Absensi</option>
+            <option value="shift">Data Shift</option>
+            <option value="produksi">Data Produksi</option>
+            <option value="kecelakaan" selected>Data Kecelakaan</option>
+        </select>
+
+        <div style="margin-top: 20px;">
+            <input type="file" id="fileInput" accept=".csv" />
+            <button type="button" onclick="uploadFile()">Upload</button>
+        </div>
+
+        <p id="uploadMessage"></p>
+        <div id="failedTable"></div>
+    </div>
+
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const jenisData = document.getElementById('jenisData').value;
+            const message = document.getElementById('uploadMessage');
+            const failedTableDiv = document.getElementById('failedTable');
+
+            message.textContent = '';
+            failedTableDiv.innerHTML = '';
+
+            if(fileInput.files.length === 0){
+                message.style.color = "red";
+                message.textContent = "Silakan pilih file terlebih dahulu!";
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('csv_file', file);
+            formData.append('jenis_data', jenisData);
+
+            message.style.color = "gray";
+            message.textContent = "Sedang memproses upload...";
+
+            fetch('upload_csv.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success'){
+                    message.style.color = "green";
+                    message.textContent = data.message;
+
+                    if(data.details && data.details.length > 0){
+                        let html = "<h3>Baris Gagal:</h3><table><tr><th>Row</th><th>Alasan</th></tr>";
+                        data.details.forEach(d => {
+                            html += `<tr class="failed-row"><td>${d.row}</td><td>${d.reason}</td></tr>`;
+                        });
+                        html += "</table>";
+                        failedTableDiv.innerHTML = html;
+                    }
+
+                    fileInput.value = '';
+                } else {
+                    message.style.color = "red";
+                    message.textContent = data.message;
+                }
+            })
+            .catch(err => {
+                message.style.color = "red";
+                message.textContent = "Terjadi kesalahan jaringan/server.";
+                console.error(err);
+            });
+        }
+    </script>
+</body>
+</html>

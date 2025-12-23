@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>DASHBOARD PT INTIMAS METAL Pratama</title>        
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <link rel="stylesheet" href="data.css">
+        <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+        <link rel="icon" type="image/png" href="logo.png">
+        <script src="https://kit.fontawesome.com/431a8191cd.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    
+    <div class="bg-1">
+        <header>
+            <img src="logo.png" alt="Logo" class="logo">
+            <h1 style="color: black;">PT Intimas Metal Pratama</h1>
+        </header>
+    </div>
+
+    
+    <div class="sidebar">
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="data.html" class="active">Sumber Data</a></li>
+            <li><a href="csv.html">Upload CSV</a></li>
+            <li><a href="login.html">Logout</a></li>
+        </ul>
+    </div>
+
+    
+    <div class="main-content">
+        <h2>Jenis Data:</h2>
+        <select id="jenisData" onchange="tampilkanData()">
+        <option value="karyawan">Data Karyawan</option>
+        <option value="absensi">Data Absensi</option>
+        <option value="shift">Data Shift</option>
+        <option value="produksi">Data Produksi</option>
+        <option value="kecelakaan" selected>Data Kecelakaan</option>
+        </select>
+
+        <div id="tabelData" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        
+        
+        function tampilkanData() {
+            const jenis = document.getElementById('jenisData').value;
+            const tabelDataDiv = document.getElementById('tabelData');
+            tabelDataDiv.innerHTML = "<p>Loading data...</p>"; 
+
+            
+            fetch(`get_data.php?jenis=${jenis}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Gagal mengambil data dari server.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Cek apakah data kosong atau tidak
+                    if (!data || data.length === 0) {
+                        tabelDataDiv.innerHTML = "<p>Tidak ada data di tabel ini.</p>";
+                        return;
+                    }
+
+                    // Logika untuk membuat tabel 
+                    let html = "<table border='1' cellpadding='8' cellspacing='0'>";
+                    
+                    // Baris Header 
+                    html += "<tr>";
+                    for(let key in data[0]){
+                        html += "<th>" + key.toUpperCase().replace('_', ' ') + "</th>"; 
+                    }
+                    html += "</tr>";
+
+                    // Baris Data
+                    data.forEach(row => {
+                        html += "<tr>";
+                        for(let key in row){
+                            html += "<td>" + row[key] + "</td>";
+                        }
+                        html += "</tr>";
+                    });
+
+                    html += "</table>";
+                    tabelDataDiv.innerHTML = html;
+                })
+                .catch(error => {
+                    
+                    tabelDataDiv.innerHTML = `<p style="color: red;">${error.message}. Cek koneksi database dan nama tabel di get_data.php.</p>`;
+                    console.error('Fetch Error:', error);
+                });
+        }
+
+        tampilkanData();
+    </script>
+</body>
+</html>
